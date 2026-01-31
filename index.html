@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow</title>
+     <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+     <link rel="stylesheet" href="styles/style.css">
+     <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10b981">
+</head>
+<body>
+    <div class="container">
+
+        <header>
+            <button id="menuBtn" class="menu-btn">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            
+            <h1>FocusFlow</h1>
+
+            <div id="rankBadge" class="rank-badge">
+                <img id="rankImage" src="images/rank-1.jpg" alt="Rank Icon">
+                <span id="rankTitle">تازه وارد</span>
+            </div>
+        </header>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>⚙️ تنظیمات</h2>
+            <button class="close-sidebar" id="closeSidebarBtn">&times;</button>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="setting-group">
+                <h3>⏱️ زمان‌بندی (دقیقه)</h3>
+                <div class="input-row">
+                    <label>زمان کار</label>
+                    <input type="number" id="workTime" min="1" value="25">
+                </div>
+                <div class="input-row">
+                    <label>استراحت کوتاه</label>
+                    <input type="number" id="breakTime" min="1" value="5">
+                </div>
+                <div class="input-row">
+                    <label>استراحت طولانی</label>
+                    <input type="number" id="longBreakTime" min="1" value="15">
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>🎨 ظاهر برنامه</h3>
+                <div class="input-row">
+                    <label>تم رنگی</label>
+                    <select id="themeSelect">
+                        <option value="default">🌿 کلاسیک</option>
+                        <option value="purple">💜 سایبرپانک</option>
+                        <option value="coffee">☕ کافه</option>
+                        <option value="ocean">🌊 اقیانوس</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>🔔 سایر</h3>
+                <div class="input-row">
+                    <label>شروع خودکار</label>
+                    <select id="autoStart">
+                        <option value="false">خیر</option>
+                        <option value="true">بله</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>تعداد تا استراحت طولانی</label>
+                    <input type="number" id="pomodorosUntilLongBreak" min="1" value="4">
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>🌧️ صدای محیط</h3>
+                <div class="input-row">
+                    <label>نوع صدا</label>
+                    <select id="soundSelect">
+                        <option value="none">قطع</option>
+                        <option value="rain">باران 🌧️</option>
+                        <option value="cafe">کافه ☕</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>حجم صدا</label>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="50" style="width: 100px;">
+                </div>
+                <audio id="ambientPlayer" loop></audio>
+            </div>
+
+            <div class="setting-group">
+                <h3>💾 مدیریت داده‌ها</h3>
+                <div style="display: flex; gap: 10px; flex-direction: column;">
+                    <button id="backupBtn" class="btn-action btn-backup">📥 دانلود بکاپ</button>
+                    
+                    <button id="restoreBtn" class="btn-action btn-restore">📤 بازگردانی فایل</button>
+                    <input type="file" id="fileInput" accept=".json" style="display: none;">
+                </div>
+            </div>
+                        <div style="text-align: center; margin-top: 30px; color: #666; font-size: 0.8rem;">
+                My Pomodoro v2.0
+            </div>
+        </div>
+
+        
+    </div>
+
+        <!-- نوار آمار بالا -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-icon">📅</span>
+                <span id="currentDate">امروز: در حال بارگذاری...</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">🎯</span>
+                <span>پومودروهای امروز: <span id="todayPomodoros" class="stat-value">0</span></span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">⏳</span>
+                <span>مطالعه امروز: <span id="todayStudyTime" class="stat-value">0 دقیقه</span></span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">🔥</span>
+                <span>رکورد: <span id="streakCount" class="stat-value">0 روز</span></span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- بخش تایمر -->
+            
+            <section class="timer-section">
+
+                <div class="timer-header">
+                    <div class="timer-mode mode-work" id="modeIndicator">⏳ زمان کار</div>
+                    <div class="pomodoro-counter">
+                        <span>🍅</span>
+                        <span id="pomodoroCount">پومودرو: 0/4</span>
+                    </div>
+                </div>
+
+                
+
+                <div class="timer-container">
+                    <div class="timer-display" id="timerDisplay">25:00</div>
+                </div>
+
+                <div class="tasks-wrapper">
+
+                    <div class="task-header">
+                        <h3>📝 لیست کارها</h3>
+                        <span id="activeTaskLabel" style="font-size: 0.9rem; color: #a7f3d0; display: none;">
+                            در حال انجام: <strong id="activeTaskName">---</strong>
+                        </span>
+                    </div>
+                    
+                    <div class="task-input-box">
+                        <input type="text" id="newTaskInput" placeholder="عنوان تسک..." style="flex: 3;">
+                        <input type="number" id="newTaskTarget" placeholder="تعداد" min="1" max="10" value="1" style="flex: 1; text-align: center;">
+                        <button id="addTaskBtn" class="btn-add">+</button>
+                    </div>
+                    
+
+                    <div id="tasksList" class="tasks-list">
+                    </div>
+                </div>
+
+ 
+
+                <div class="controls">
+                    <button class="btn btn-start" id="startBtn">
+                        <span>▶️</span> شروع
+                    </button>
+                    <button class="btn btn-pause" id="pauseBtn" disabled>
+                        <span>⏸️</span> توقف
+                    </button>
+                    <button class="btn btn-reset" id="resetBtn">
+                        <span>🔄</span> ریست
+                    </button>
+                    <button class="btn btn-skip" id="skipBtn">
+                        <span>⏭️</span> رد کردن
+                    </button>
+                </div>
+
+
+
+
+                <!-- تنظیمات پیشرفته -->
+ 
+            </section>
+
+            
+
+            <!-- بخش آمار و اهداف -->
+            <section class="stats-section">
+                <div class="goals-container">
+                    <div class="goal-card goal-daily">
+                        <h3>🎯 هدف روزانه</h3>
+                        <div class="goal-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="dailyProgressFill" style="width: 0%; background: linear-gradient(90deg, #4cc9f0, #4361ee);"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span id="dailyCurrent">0 دقیقه</span>
+                                <span id="dailyGoal">هدف: 0 دقیقه</span>
+                            </div>
+                        </div>
+                        <div class="goal-input-row">
+                            <input type="number" id="dailyGoalInput" min="30" max="480" placeholder="دقیقه">
+                            <button class="btn-goal" id="setDailyGoalBtn">تعیین</button>
+                        </div>
+                    </div>
+
+                    <div class="goal-card goal-weekly">
+                        <h3>📊 هدف هفتگی</h3>
+                        <div class="goal-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="weeklyProgressFill" style="width: 0%; background: linear-gradient(90deg, #7209b7, #3a0ca3);"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span id="weeklyCurrent">0 ساعت</span>
+                                <span id="weeklyGoal">هدف: 0 ساعت</span>
+                            </div>
+                        </div>
+                        <div class="goal-input-row">
+                            <input type="number" id="weeklyGoalInput" min="5" max="50" placeholder="ساعت">
+                            <button class="btn-goal" id="setWeeklyGoalBtn">تعیین</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تب‌های گزارش -->
+                <div class="reports-tabs">
+                    <button class="tab-btn active" data-tab="history">📝 تاریخچه روزانه</button>
+                    <button class="tab-btn" data-tab="weekly">📊 گزارش هفتگی</button>
+                    <button class="tab-btn" data-tab="monthly">📈 آمار ماهانه</button>
+                </div>
+
+                <div id="historyTab" class="tab-content active">
+                    <div class="history-container" id="historyContainer">
+                        <!-- تاریخچه بارگذاری می‌شود -->
+                    </div>
+                </div>
+
+                <div id="weeklyTab" class="tab-content">
+                    <div class="chart-container">
+                        <div class="chart-bar" id="weeklyChart">
+                            <!-- چارت هفتگی -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="monthlyTab" class="tab-content">
+                    <div id="monthlyStats">
+                        <!-- آمار ماهانه -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+ 
+    <div class="alert-overlay" id="alertOverlay">
+        <div class="alert-box">
+            <div class="alert-icon" id="alertIcon">⏰</div>
+            <h2 id="alertTitle">زمان تمام شد!</h2>
+            <p id="alertMessage" style="font-size: 1.3rem; margin: 20px 0; line-height: 1.6;"></p>
+            <div class="alert-buttons">
+                <button class="btn btn-start" id="alertStartNextBtn">شروع تایمر بعدی</button>
+                <button class="btn btn-reset" id="alertCloseBtn">بستن</button>
+            </div>
+        </div>
+    </div>
+    
+
+ 
+    <div class="notification" id="notification">
+        <div class="notification-icon" id="notificationIcon">🎉</div>
+        <div>
+            <div id="notificationTitle" style="font-weight: bold; margin-bottom: 5px;"></div>
+            <div id="notificationMessage" style="font-size: 0.9rem;"></div>
+        </div>
+
+        
+    </div>
+<script src="scripts/script.js"> </script> 
+</body>
+</html>
