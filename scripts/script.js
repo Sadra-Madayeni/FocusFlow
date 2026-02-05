@@ -112,7 +112,7 @@ function init() {
 
 function loadData() {
     const saved = localStorage.getItem('myPomodoroData');
-    const today = new Date().toLocaleDateString('en-CA');
+    const today = new Date().toLocaleDateString('en-CA'); // فرمت استاندارد YYYY-MM-DD
 
     if (saved) {
         try {
@@ -123,6 +123,8 @@ function loadData() {
 
             if (data.stats) {
                 state.stats = { ...state.stats, ...data.stats };
+                
+                // بازیابی آمار امروز
                 const todayRecord = state.stats.history.find(h => h.date === today);
                 if (todayRecord) {
                     state.stats.todayPomodoros = todayRecord.pomodoros;
@@ -132,23 +134,29 @@ function loadData() {
                     state.stats.todayMinutes = 0;
                 }
 
-                if (state.stats.lastLoginDate !== today) {
-                    const yesterday = new Date();
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    const yesterdayStr = yesterday.toLocaleDateString('en-CA');
-                    if (state.stats.lastLoginDate !== yesterdayStr && state.stats.lastLoginDate !== today) {
-                        state.stats.streak = (state.stats.lastLoginDate === null) ? 1 : 0;
-                    }
-                    state.stats.lastLoginDate = today;
+                // *** منطق جدید چک کردن رکورد (فقط ریست کردن) ***
+                // محاسبه تاریخ دیروز
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toLocaleDateString('en-CA');
+
+                // اگر آخرین بازدید امروز نیست و دیروز هم نبوده (یعنی غیبت داشتیم)
+                if (state.stats.lastLoginDate && 
+                    state.stats.lastLoginDate !== today && 
+                    state.stats.lastLoginDate !== yesterdayStr) {
+                    state.stats.streak = 0; // رکورد سوخت :(
                 }
+                
+                // نکته مهم: اینجا تاریخ را آپدیت نمی‌کنیم! 
+                // تاریخ فقط وقتی آپدیت می‌شود که یک پومودورو تمام کنید.
             }
             state.pomodorosInCycle = data.pomodorosInCycle || 0;
         } catch (e) { console.error(e); }
     } else {
-        state.stats.lastLoginDate = today;
-        state.stats.streak = 1;
+        state.stats.streak = 0;
     }
 
+    // آپدیت UI
     elements.inputs.work.value = state.settings.workTime;
     elements.inputs.break.value = state.settings.breakTime;
     elements.inputs.longBreak.value = state.settings.longBreakTime;
@@ -161,7 +169,6 @@ function loadData() {
         elements.inputs.theme.value = state.settings.theme;
         applyTheme(state.settings.theme);
     }
-
     
     updateStatsUI();
 }
@@ -411,12 +418,30 @@ function setupEventListeners() {
 function startTimer() {
     requestNotificationPermission();
     if (state.isRunning) return;
+    
     state.isRunning = true;
     updateControls();
+
+    const endTime = Date.now() + (state.timeLeft * 1000);
+
     state.timerId = setInterval(() => {
-        state.timeLeft--;
-        updateDisplay();
-        if (state.timeLeft <= 0) completeTimer(false);
+
+        const now = Date.now();
+        const distance = endTime - now;
+        
+        const secondsLeft = Math.ceil(distance / 1000);
+
+        if (secondsLeft >= 0) {
+            state.timeLeft = secondsLeft;
+            updateDisplay();
+        }
+
+        // 4. پایان تایمر
+        if (state.timeLeft <= 0) {
+            state.timeLeft = 0;
+            updateDisplay();
+            completeTimer(false);
+        }
     }, 1000);
 }
 
@@ -498,21 +523,45 @@ function completeTimer(skipped = false) {
 function saveStatsAfterWork() {
     const today = new Date().toLocaleDateString('en-CA');
     
+    if (state.stats.lastLoginDate !== today) {
+        
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toLocaleDateString('en-CA');
+
+        // اگر آخرین باری که کار کردیم دیروز بوده، رکورد رو یکی ببر بالا
+        if (state.stats.lastLoginDate === yesterdayStr) {
+            state.stats.streak++;
+        } else {
+            // اگر دیروز نبوده (و امروز هم نیست)، یعنی زنجیره پاره شده یا روز اوله
+            state.stats.streak = 1;
+        }
+        
+        // حالا تاریخ رو بکن امروز
+        state.stats.lastLoginDate = today;
+    }
+
+    // ادامه کدهای قبلی...
     state.stats.todayPomodoros++;
     state.stats.todayMinutes += state.settings.workTime;
-    state.stats.lastLoginDate = today;
 
     let dayRecord = state.stats.history.find(h => h.date === today);
-    if (dayRecord) { dayRecord.pomodoros = state.stats.todayPomodoros; dayRecord.minutes = state.stats.todayMinutes; } 
-    else { state.stats.history.push({ date: today, pomodoros: state.stats.todayPomodoros, minutes: state.stats.todayMinutes }); }
+    if (dayRecord) { 
+        dayRecord.pomodoros = state.stats.todayPomodoros; 
+        dayRecord.minutes = state.stats.todayMinutes; 
+    } else { 
+        state.stats.history.push({ 
+            date: today, 
+            pomodoros: state.stats.todayPomodoros, 
+            minutes: state.stats.todayMinutes 
+        }); 
+    }
 
- 
+    // مدیریت تسک‌ها
     if (state.activeTaskId) {
         const activeTask = state.tasks.find(t => t.id === state.activeTaskId);
         if (activeTask && !activeTask.completed) {
             activeTask.pomodoros = (activeTask.pomodoros || 0) + 1;
-            
-       
             if (activeTask.pomodoros >= activeTask.target) {
                 activeTask.completed = true;
                 showNotification("🎉 تبریک!", `تسک "${activeTask.title}" کامل شد!`);
