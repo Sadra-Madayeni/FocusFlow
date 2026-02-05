@@ -529,19 +529,17 @@ function saveStatsAfterWork() {
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toLocaleDateString('en-CA');
 
-        // اگر آخرین باری که کار کردیم دیروز بوده، رکورد رو یکی ببر بالا
+    
         if (state.stats.lastLoginDate === yesterdayStr) {
             state.stats.streak++;
         } else {
-            // اگر دیروز نبوده (و امروز هم نیست)، یعنی زنجیره پاره شده یا روز اوله
             state.stats.streak = 1;
         }
         
-        // حالا تاریخ رو بکن امروز
+ 
         state.stats.lastLoginDate = today;
     }
 
-    // ادامه کدهای قبلی...
     state.stats.todayPomodoros++;
     state.stats.todayMinutes += state.settings.workTime;
 
@@ -689,19 +687,28 @@ if ('serviceWorker' in navigator) {
   }
 document.addEventListener('DOMContentLoaded', init);
 
+
 function applyTheme(themeName) {
+    
     if (themeName === 'default') {
         document.documentElement.removeAttribute('data-theme');
     } else {
+     
         document.documentElement.setAttribute('data-theme', themeName);
     }
     
+   
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-        let color = '#10b981'; 
-        if (themeName === 'purple') color = '#8b5cf6';
-        if (themeName === 'coffee') color = '#d97706';
-        if (themeName === 'ocean') color = '#06b6d4';
+        let color = '#10b981';  
+        
+        switch(themeName) {
+            case 'purple': color = '#8b5cf6'; break;
+            case 'coffee': color = '#d97706'; break;
+            case 'ocean':  color = '#06b6d4'; break;
+            case 'dark':   color = '#000000'; break;
+        }
+        
         metaThemeColor.setAttribute('content', color);
     }
 }
