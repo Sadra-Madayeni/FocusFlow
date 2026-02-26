@@ -1,22 +1,21 @@
-// 1. تغییر ورژن (خیلی مهم برای اینکه مرورگر بفهمه تغییری کرده)
-const CACHE_NAME = 'FocusFlow-v1.0';
 
-// 2. آدرس‌دهی دقیق بر اساس پوشه‌ها
+const CACHE_NAME = 'FocusFlow-v2.0';
+
+ 
 const ASSETS = [
-  './',                 // صفحه اصلی
-  './index.html',       // فایل ایندکس
-  './manifest.json',    // مانیفست
+  './',               
+  './index.html',      
+  './manifest.json',   
   
-  // فایل‌های داخل پوشه styles
+ 
   './styles/style.css', 
-  
-  // فایل‌های داخل پوشه scripts (یا js - چک کن اسم پوشه چیه)
+ 
   './scripts/script.js', 
 
-  // آیکون‌ها
+ 
   './icons/favicon.ico', 
 
-  // عکس‌های رنک (داخل پوشه images)
+ 
   './images/rank-1.jpg',
   './images/rank-2.jpg',
   './images/rank-3.jpg',
